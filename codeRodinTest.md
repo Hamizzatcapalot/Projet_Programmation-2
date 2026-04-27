@@ -408,7 +408,8 @@ events
   event voiture_to_monte_charge
    any v p
    where
-   		@grd1 v ∈ Voiture ∧  (v ↦ (p ↦ booking_tiket(v)) ∈ booking_data_base)
+   		@grd1 v ∈ Voiture
+   		@grd10 (v ↦ (p ↦ booking_tiket(v)) ∈ booking_data_base)
   		@grd2 booking_tiket(v)∈ Id_reservation
         @grd3 v ∈ set_of_vehicle_book_space
   		@grd4 (card(monte_charge ∩ Voiture)+ 3∗card(monte_charge ∩ Camion))+1 ≤ max_monte_charge
@@ -427,7 +428,8 @@ events
   event  camion_to_monte_charge
    any v p
    where
-   		@grd1 v ∈ Camion ∧  (v ↦ (p ↦ booking_tiket(v)) ∈ booking_data_base)
+   		@grd1 v ∈ Camion
+   		@grd10 (v ↦ (p ↦ booking_tiket(v)) ∈ booking_data_base)
   		@grd2 booking_tiket(v)∈ Id_reservation
         @grd6 v ∈ set_of_vehicle_book_space
   		@grd7 (card(monte_charge ∩ Voiture)+ 3∗card(monte_charge ∩ Camion))+3 ≤ max_monte_charge
@@ -451,7 +453,7 @@ events
         @grd4 barrieres = FALSE
         @grd5 v ↦ (p ↦ booking_tiket(v)) ∈ booking_data_base
         @grd6 card(monte_charge) > 0
-        @grd7 p ≠ position_montecharge
+
     then
         @act1 pont_cible ≔ p
         @act2 capteurs ≔ FALSE
@@ -463,6 +465,7 @@ events
         @grd2 capteurs = FALSE
         @grd3 card(monte_charge) > 0
         @grd4 barrieres = FALSE
+        @grd5 end_embark = FALSE
     then
         @act1 position_montecharge ≔ pont_cible
     end
@@ -473,6 +476,7 @@ events
         @grd2 capteurs = FALSE
         @grd3 card(monte_charge) > 0
         @grd4 barrieres = FALSE
+        @grd5 end_embark = FALSE
     then
         @act1 capteurs ≔ TRUE
     end
@@ -527,13 +531,24 @@ events
 	    @act1 barrieres ≔ TRUE
 	end
 
-  event off_barrieres
-   where
-       @grd1 barrieres = TRUE
-   then
-   	   @act1 barrieres ≔ FALSE
-   	   @act2 capteurs ≔ FALSE
-  end
+  event off_barrieres_embarquement
+	where
+	    @grd1 barrieres = TRUE
+	    @grd2 end_embark = TRUE
+	    @grd3 card(monte_charge) > 0
+	then
+	    @act1 barrieres ≔ FALSE
+	    @act2 end_embark ≔ FALSE
+	end
+
+	event off_barrieres_debarquement
+	where
+	    @grd1 barrieres = TRUE
+	    @grd2 end_embark = FALSE
+	then
+	    @act1 barrieres ≔ FALSE
+	    @act2 capteurs ≔ FALSE
+	end
 
 
 end
