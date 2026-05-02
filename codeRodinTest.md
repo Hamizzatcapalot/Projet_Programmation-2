@@ -561,7 +561,7 @@ end
 machine Ferry5
 sees
 context_ferry2
-
+ 
 variables
 booking_tiket
 booking_data_base
@@ -581,7 +581,7 @@ position_montecharge
 file1
 file2
 notifications
-
+ 
 invariants
 	@inv1  booking_tiket ∈ Vehicule ⇸ Id_reservation
 	@inv2  booking_data_base ⊆ Vehicule × (Pont × Id_reservation)
@@ -601,10 +601,10 @@ invariants
 	@inv17 file1 ⊆ Vehicule
 	@inv18 file2 ⊆ Vehicule
 	@inv19 file1 ∩ file2 = ∅
-	@inv20 notifications ⊆ Vehicule
-
+	@inv20 notifications ⊆ (⋃ p · p ∈ Pont | set_of_vehicle_on_bridge(p))
+ 
 events
-
+ 
   event INITIALISATION
   	then
   		@act1  booking_tiket ≔ ∅
@@ -629,7 +629,7 @@ events
   		@act21 file2 ≔ ∅
   		@act22 notifications ≔ ∅
   end
-
+ 
   event booking_space_on_boat_update
   	any v p num_reservation
   	where
@@ -647,7 +647,7 @@ events
   		@act4 set_of_vehicle_book_space ≔ set_of_vehicle_book_space ∪ {v}
   		@act5 available_space_on_bridge(p) ≔ available_space_on_bridge(p) − size_of_vehicle(v)
   end
-
+ 
   /* Borne de lecture : véhicule entre en file 1 (camions) ou file 2 (voitures) */
   event borne_lecture_camion
   	any v
@@ -659,7 +659,7 @@ events
   	then
   		@act1 file1 ≔ file1 ∪ {v}
   end
-
+ 
   event borne_lecture_voiture
   	any v
   	where
@@ -670,7 +670,7 @@ events
   	then
   		@act1 file2 ≔ file2 ∪ {v}
   end
-
+ 
   /* Les camions (file1) montent en premier sur le monte-charge */
   event camion_to_monte_charge
    any v p
@@ -690,7 +690,7 @@ events
         @act2 set_of_vehicle_book_space ≔ set_of_vehicle_book_space ∖ {v}
         @act3 file1 ≔ file1 ∖ {v}
   end
-
+ 
   /* Les voitures (file2) montent après les camions */
   event voiture_to_monte_charge
    any v p
@@ -711,7 +711,7 @@ events
         @act2 set_of_vehicle_book_space ≔ set_of_vehicle_book_space ∖ {v}
         @act3 file2 ≔ file2 ∖ {v}
   end
-
+ 
   event monte_charge_up_to_pont
     any p v
     where
@@ -725,7 +725,7 @@ events
         @act1 pont_cible ≔ p
         @act2 capteurs ≔ FALSE
     end
-
+ 
    event monte_charge_arrives
     where
         @grd1 pont_cible ≠ position_montecharge
@@ -736,7 +736,7 @@ events
     then
         @act1 position_montecharge ≔ pont_cible
     end
-
+ 
    event capteurs_detecte_alignement
     where
         @grd1 position_montecharge = pont_cible
@@ -747,7 +747,7 @@ events
     then
         @act1 capteurs ≔ TRUE
     end
-
+ 
   event monte_charge_to_pont
    any v p
    where
@@ -767,7 +767,17 @@ events
         /* Notification envoyée au conducteur */
         @act4 notifications ≔ notifications ∪ {v}
   end
-
+ 
+  /* Le conducteur reçoit et acquitte la notification */
+  event conducteur_recoit_notification
+   any v
+   where
+        @grd1 v ∈ notifications
+        @grd2 v ∈ dom(booking_tiket)
+   then
+        @act1 notifications ≔ notifications ∖ {v}
+  end
+ 
   event move_monte_charge_down
    where
    		@grd1 monte_charge = ∅
@@ -776,7 +786,7 @@ events
    then
         @act1 end_embark ≔ TRUE
   end
-
+ 
   event on_barrieres_embarquement
 	where
 	    @grd1 barrieres = FALSE
@@ -786,7 +796,7 @@ events
 	then
 	    @act1 barrieres ≔ TRUE
 	end
-
+ 
 	event on_barrieres_debarquement
 	where
 	    @grd1 barrieres = FALSE
@@ -796,7 +806,7 @@ events
 	then
 	    @act1 barrieres ≔ TRUE
 	end
-
+ 
   event off_barrieres_embarquement
 	where
 	    @grd1 barrieres = TRUE
@@ -806,7 +816,7 @@ events
 	    @act1 barrieres ≔ FALSE
 	    @act2 end_embark ≔ FALSE
 	end
-
+ 
 	event off_barrieres_debarquement
 	where
 	    @grd1 barrieres = TRUE
@@ -815,9 +825,8 @@ events
 	    @act1 barrieres ≔ FALSE
 	    @act2 capteurs ≔ FALSE
 	end
-
+ 
 end
-
 
 
 <!-- Fin M5 -->
