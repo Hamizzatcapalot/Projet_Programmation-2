@@ -601,7 +601,7 @@ invariants
 	@inv17 file1 ⊆ Vehicule
 	@inv18 file2 ⊆ Vehicule
 	@inv19 file1 ∩ file2 = ∅
-	@inv20 notifications ⊆ (⋃ p · p ∈ Pont | set_of_vehicle_on_bridge(p))
+	@inv20 notifications ∈ Vehicule ⇸ Message
  
 events
  
@@ -648,7 +648,6 @@ events
   		@act5 available_space_on_bridge(p) ≔ available_space_on_bridge(p) − size_of_vehicle(v)
   end
  
-  /* Borne de lecture : véhicule entre en file 1 (camions) ou file 2 (voitures) */
   event borne_lecture_camion
   	any v
   	where
@@ -671,7 +670,6 @@ events
   		@act1 file2 ≔ file2 ∪ {v}
   end
  
-  /* Les camions (file1) montent en premier sur le monte-charge */
   event camion_to_monte_charge
    any v p
    where
@@ -691,7 +689,6 @@ events
         @act3 file1 ≔ file1 ∖ {v}
   end
  
-  /* Les voitures (file2) montent après les camions */
   event voiture_to_monte_charge
    any v p
    where
@@ -764,18 +761,16 @@ events
         @act1 set_of_vehicle_on_bridge(p) ≔ set_of_vehicle_on_bridge(p) ∪ {v}
         @act2 monte_charge ≔ monte_charge ∖ {v}
         @act3 end_embark ≔ FALSE
-        /* Notification envoyée au conducteur */
-        @act4 notifications ≔ notifications ∪ {v}
+        @act4 notifications ≔ notifications ∪ {v ↦ you_can_move}
   end
  
-  /* Le conducteur reçoit et acquitte la notification */
   event conducteur_recoit_notification
    any v
    where
-        @grd1 v ∈ notifications
+        @grd1 v ∈ dom(notifications)
         @grd2 v ∈ dom(booking_tiket)
    then
-        @act1 notifications ≔ notifications ∖ {v}
+        @act1 notifications ≔ {v} ⩤ notifications
   end
  
   event move_monte_charge_down
