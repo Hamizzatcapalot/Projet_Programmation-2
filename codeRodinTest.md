@@ -567,7 +567,7 @@ end
 machine Ferry5
 sees
 context_ferry2
- 
+
 variables
 booking_tiket
 booking_data_base
@@ -580,27 +580,27 @@ available_space_on_bridge
 size_of_vehicle
 monte_charge
 end_embark
-barrieres
+barriere_open
 capteurs
 pont_cible
 position_montecharge
 file1
 file2
 notifications
- 
+
 invariants
-	@inv1  booking_tiket ∈ Vehicule ⇸ Id_reservation
-	@inv2  booking_data_base ⊆ Vehicule × (Pont × Id_reservation)
+	@inv1 booking_tiket ∈ Vehicule ⇸ Id_reservation
+	@inv2  booking_data_base ⊆ Vehicule ×(Pont × Id_reservation)
 	@inv3  set_id_reservation ⊆ Id_reservation
-	@inv4  (voiture1 ∈ Vehicule) ∧ (voiture2 ∈ Vehicule)
-	@inv5  (pont1 ∈ Pont) ∧ (pont2 ∈ Pont) ∧ (pont3 ∈ Pont)
-	@inv6  set_of_vehicle_on_bridge ∈ Pont → ℙ(Vehicule)
-	@inv8  set_of_vehicle_book_space ⊆ Vehicule
-	@inv9  available_space_on_bridge ∈ Pont → ℕ
+	@inv4 (voiture1 ∈ Vehicule ) ∧ (voiture2 ∈ Vehicule )
+	@inv5 (pont1 ∈ Pont) ∧( pont2 ∈ Pont) ∧ (pont3 ∈ Pont)
+	@inv6 set_of_vehicle_on_bridge ∈ Pont → ℙ(Vehicule )
+	@inv8 set_of_vehicle_book_space ⊆ Vehicule
+	@inv9 available_space_on_bridge ∈ Pont → ℕ
 	@inv10 size_of_vehicle ∈ Vehicule → ℕ
 	@inv11 monte_charge ⊆ Vehicule
 	@inv12 end_embark ∈ BOOL
-	@inv13 barrieres ∈ BOOL
+	@inv13 barriere_open ∈ BOOL
 	@inv14 capteurs ∈ BOOL
 	@inv15 pont_cible ∈ Pont
 	@inv16 position_montecharge ∈ Pont
@@ -608,34 +608,34 @@ invariants
 	@inv18 file2 ⊆ Vehicule
 	@inv19 file1 ∩ file2 = ∅
 	@inv20 notifications ∈ Vehicule ⇸ Message
- 
+
 events
- 
+
   event INITIALISATION
   	then
-  		@act1  booking_tiket ≔ ∅
-  		@act2  booking_data_base ≔ ∅
-  		@act3  voiture1 ≔ v1
-  		@act4  voiture2 ≔ v2
-  		@act5  pont1 ≔ p1
-  		@act6  pont2 ≔ p2
-  		@act7  pont3 ≔ p3
-  		@act8  set_id_reservation ≔ ∅
-  		@act9  set_of_vehicle_on_bridge ≔ {p1 ↦ ∅, p2 ↦ ∅, p3 ↦ ∅}
-  		@act11 set_of_vehicle_book_space ≔ ∅
-  		@act12 available_space_on_bridge ≔ {p1 ↦ max_capacity_pont, p2 ↦ max_capacity_pont, p3 ↦ max_capacity_pont}
-  		@act13 size_of_vehicle ≔ {x ↦ 1 ∣ x ∈ Voiture} ∪ {y ↦ 3 ∣ y ∈ Camion}
-  		@act14 monte_charge ≔ ∅
-  		@act15 end_embark ≔ TRUE
-  		@act16 barrieres ≔ FALSE
-  		@act17 capteurs ≔ FALSE
-  		@act18 pont_cible ≔ p1
-  		@act19 position_montecharge ≔ p1
+  		@act1 booking_tiket≔∅
+  		@act2 booking_data_base≔∅
+  		@act3 voiture1≔v1
+  		@act4 voiture2≔v2
+  		@act5 pont1≔p1
+  		@act6 pont2≔p2
+  		@act7 pont3≔p3
+  		@act8 set_id_reservation≔∅
+  		@act9 set_of_vehicle_on_bridge≔{p1↦∅, p2↦∅,p3↦∅}
+  		@act11 set_of_vehicle_book_space≔∅
+  		@act12 available_space_on_bridge≔{p1↦ max_capacity_pont,p2↦max_capacity_pont,p3↦max_capacity_pont}
+        @act13 size_of_vehicle ≔ { x ↦ 1 ∣ x ∈ Voiture } ∪ { y ↦ 3 ∣ y ∈ Camion }
+        @act14 monte_charge≔∅
+        @act15 end_embark ≔ TRUE
+        @act16 barriere_open ≔ FALSE
+        @act17 capteurs ≔ FALSE
+        @act18 pont_cible ≔ p1
+        @act19 position_montecharge ≔ p1
   		@act20 file1 ≔ ∅
   		@act21 file2 ≔ ∅
   		@act22 notifications ≔ ∅
   end
- 
+
   event booking_space_on_boat_update
   	any v p num_reservation
   	where
@@ -653,29 +653,43 @@ events
   		@act4 set_of_vehicle_book_space ≔ set_of_vehicle_book_space ∪ {v}
   		@act5 available_space_on_bridge(p) ≔ available_space_on_bridge(p) − size_of_vehicle(v)
   end
- 
+
   event borne_lecture_camion
-  	any v
+  	any v p
   	where
   		@grd1 v ∈ Camion
   		@grd2 v ∈ dom(booking_tiket)
   		@grd3 v ∉ file1
   		@grd4 v ∉ file2
+  		@grd5 barriere_open = FALSE
+        @grd6 card(monte_charge) = 0
+        @grd7 end_embark = TRUE
+        @grd8 p ∈ Pont
+        @grd9 ∀ q · q ∈ Pont ⇒ v ∉ set_of_vehicle_on_bridge(q)
+
   	then
   		@act1 file1 ≔ file1 ∪ {v}
+
   end
- 
+
   event borne_lecture_voiture
-  	any v
+  	any v p
   	where
   		@grd1 v ∈ Voiture
   		@grd2 v ∈ dom(booking_tiket)
   		@grd3 v ∉ file1
   		@grd4 v ∉ file2
+  		@grd5 barriere_open = FALSE
+        @grd6 card(monte_charge) = 0
+        @grd7 end_embark = TRUE
+        @grd8 (set_of_vehicle_book_space ∖ file1) ⊆ Voiture
+        @grd9 p ∈ Pont
+		@grd10 ∀ q · q ∈ Pont ⇒ v ∉ set_of_vehicle_on_bridge(q)
   	then
   		@act1 file2 ≔ file2 ∪ {v}
+
   end
- 
+
   event camion_to_monte_charge
    any v p
    where
@@ -687,14 +701,14 @@ events
   		@grd7  (card(monte_charge ∩ Voiture) + 3 ∗ card(monte_charge ∩ Camion)) + 3 ≤ max_monte_charge
   		@grd8  booking_data_base ≠ ∅
   		@grd9  end_embark = TRUE
-  		@grd3  barrieres = TRUE
+  		@grd3  barriere_open = TRUE
   		@grd4  p ∈ Pont
    then
         @act1 monte_charge ≔ monte_charge ∪ {v}
         @act2 set_of_vehicle_book_space ≔ set_of_vehicle_book_space ∖ {v}
         @act3 file1 ≔ file1 ∖ {v}
   end
- 
+
   event voiture_to_monte_charge
    any v p
    where
@@ -707,50 +721,55 @@ events
   		@grd5  booking_data_base ≠ ∅
   		@grd6  set_of_vehicle_book_space ∩ Camion = ∅
   		@grd7  end_embark = TRUE
-  		@grd8  barrieres = TRUE
+  		@grd8  barriere_open = TRUE
   		@grd9  p ∈ Pont
    then
         @act1 monte_charge ≔ monte_charge ∪ {v}
         @act2 set_of_vehicle_book_space ≔ set_of_vehicle_book_space ∖ {v}
         @act3 file2 ≔ file2 ∖ {v}
   end
- 
-  event monte_charge_up_to_pont
+
+  event move_monte_charge_up
     any p v
     where
-    	@grd1 p ∈ Pont
+    	@grd1 p ∈ {p2,p3}
         @grd2 v ∈ monte_charge
         @grd3 end_embark = FALSE
-        @grd4 barrieres = FALSE
+        @grd4 barriere_open = FALSE
         @grd5 v ↦ (p ↦ booking_tiket(v)) ∈ booking_data_base
         @grd6 card(monte_charge) > 0
+        @grd7  capteurs = FALSE
     then
         @act1 pont_cible ≔ p
-        @act2 capteurs ≔ FALSE
+
     end
- 
-   event monte_charge_arrives
+
+   event update_monte_charge_location
     where
         @grd1 pont_cible ≠ position_montecharge
         @grd2 capteurs = FALSE
         @grd3 card(monte_charge) > 0
-        @grd4 barrieres = FALSE
+        @grd4 barriere_open = FALSE
         @grd5 end_embark = FALSE
     then
         @act1 position_montecharge ≔ pont_cible
     end
- 
+
    event capteurs_detecte_alignement
     where
         @grd1 position_montecharge = pont_cible
         @grd2 capteurs = FALSE
         @grd3 card(monte_charge) > 0
-        @grd4 barrieres = FALSE
+        @grd4 barriere_open = FALSE
         @grd5 end_embark = FALSE
+
+
     then
         @act1 capteurs ≔ TRUE
+
+
     end
- 
+
   event monte_charge_to_pont
    any v p
    where
@@ -760,73 +779,75 @@ events
           @grd4 p ∈ Pont
           @grd5 v ↦ (p ↦ booking_tiket(v)) ∈ booking_data_base
           @grd6 card(monte_charge) > 0
-          @grd8 barrieres = TRUE
+          @grd8 barriere_open = TRUE
           @grd7 max_capacity_pont − card(set_of_vehicle_on_bridge(p)) ≥ (card(monte_charge ∩ Voiture) + 3 ∗ card(monte_charge ∩ Camion))
           @grd9 p = pont_cible
+          @grd10 capteurs=TRUE
    then
         @act1 set_of_vehicle_on_bridge(p) ≔ set_of_vehicle_on_bridge(p) ∪ {v}
         @act2 monte_charge ≔ monte_charge ∖ {v}
         @act3 end_embark ≔ FALSE
-        @act4 notifications ≔ notifications ∪ {v ↦ you_can_move}
+        @act4 notifications ≔ {v} ⩤ notifications
+
   end
- 
-  event conducteur_recoit_notification
-   any v
-   where
-        @grd1 v ∈ dom(notifications)
-        @grd2 v ∈ dom(booking_tiket)
-   then
-        @act1 notifications ≔ {v} ⩤ notifications
-  end
- 
+
+
+
   event move_monte_charge_down
    where
    		@grd1 monte_charge = ∅
    		@grd2 end_embark = FALSE
-   		@grd3 barrieres = FALSE
+   		@grd3 barriere_open = FALSE
    then
         @act1 end_embark ≔ TRUE
+        @act2 position_montecharge ≔ p1
   end
- 
-  event on_barrieres_embarquement
+
+  event open_barrieres_embarquement
 	where
-	    @grd1 barrieres = FALSE
+	    @grd1 barriere_open = FALSE
 	    @grd2 set_of_vehicle_book_space ≠ ∅
 	    @grd3 card(monte_charge) = 0
 	    @grd4 end_embark = TRUE
+	    @grd5 (card(file1)> 0) ∨ (card(file2)> 0)
 	then
-	    @act1 barrieres ≔ TRUE
+	    @act1 barriere_open ≔ TRUE
 	end
- 
-	event on_barrieres_debarquement
+
+	event open_barrieres_debarquement
+
 	where
-	    @grd1 barrieres = FALSE
+	    @grd1 barriere_open = FALSE
 	    @grd2 capteurs = TRUE
 	    @grd3 card(monte_charge) > 0
 	    @grd4 end_embark = FALSE
+
 	then
-	    @act1 barrieres ≔ TRUE
+	    @act1 barriere_open ≔ TRUE
+	    @act2 notifications ≔ notifications ∪ (monte_charge × {you_can_move})
 	end
- 
-  event off_barrieres_embarquement
+
+  event close_barrieres_embarquement
 	where
-	    @grd1 barrieres = TRUE
+	    @grd1 barriere_open = TRUE
 	    @grd2 end_embark = TRUE
 	    @grd3 card(monte_charge) > 0
 	then
-	    @act1 barrieres ≔ FALSE
+	    @act1 barriere_open ≔ FALSE
 	    @act2 end_embark ≔ FALSE
+
 	end
- 
-	event off_barrieres_debarquement
+
+	event close_barrieres_debarquement
 	where
-	    @grd1 barrieres = TRUE
+	    @grd1 barriere_open = TRUE
 	    @grd2 end_embark = FALSE
+	    @grd3 (card(monte_charge)= 0) ∨ (card(monte_charge)> 0)
 	then
-	    @act1 barrieres ≔ FALSE
+	    @act1 barriere_open≔ FALSE
 	    @act2 capteurs ≔ FALSE
 	end
- 
+
 end
 
 
