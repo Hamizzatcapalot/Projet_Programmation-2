@@ -1,22 +1,27 @@
 context context_ferry1
 
-sets
-  Vehicule
-  Pont
-  Id_reservation
+sets Vehicule Pont Id_reservation
 
 constants
   v1 v2 v3 v4 v5 v6
   p1 p2 p3
-  i1 i2 i3 i4 i5 i6
+  i12 i23 i13 i22 i33
+  i10 i21 i30 i14 i20 i38
+  i17 i24 i31 i19 i28 i35
+  i25 i36 i18 i29 i32 i16
   max_capacity_pont
 
 axioms
-  @axm1 partition(Vehicule, {v1},{v2},{v3},{v4},{v5},{v6})
-  @axm2 partition(Pont, {p1},{p2},{p3})
-  @axm3 partition(Id_reservation, {i1},{i2},{i3},{i4},{i5},{i6})
-  @axm4 max_capacity_pont ∈ ℕ
-  @axm5 max_capacity_pont = 8
+  @axm1 partition(Vehicule,{v1},{v2},{v3},{v4},{v5},{v6})
+  @axm2 partition(Pont,{p1},{p2},{p3})
+  @axm3 max_capacity_pont ∈ ℕ
+  @axm4 max_capacity_pont = 3
+  @axm5 partition(Id_reservation,
+    {i12},{i23},{i13},{i22},{i33},
+    {i16},{i25},{i36},{i18},{i29},{i32},
+    {i10},{i21},{i30},{i14},{i20},{i38},
+    {i17},{i24},{i31},{i19},{i28},{i35}
+  )
 
 end
 
@@ -25,28 +30,30 @@ end
 
 
 context context_ferry2
+
 extends context_ferry1
 
-sets
-  Voiture
-  Camion
-  Message
+sets Message
 
 constants
-  c1 c2 c3 c4
+  c1 c2 c3 c4 c5 c6
+  max_monte_charge
+  Voiture Camion
   you_can_move
 
 axioms
-  @axm6 Voiture ⊆ Vehicule
-  @axm7 Camion ⊆ Vehicule
+  @axm1 Voiture ⊆ Vehicule ∧ Camion ⊆ Vehicule
 
-  @axm8 partition(Voiture, {v1},{v2},{v3})
-  @axm9 partition(Camion, {c1},{c2},{c3},{c4})
+  @axm2 partition(Voiture,{v1},{v2},{v3},{v4},{v5},{v6})
+  @axm3 partition(Camion,{c1},{c2},{c3},{c4},{c5},{c6})
 
-  @axm10 Vehicule = Voiture ∪ Camion
-  @axm11 Voiture ∩ Camion = ∅
+  @axm4 Vehicule = Voiture ∪ Camion
+  @axm5 Voiture ∩ Camion = ∅
 
-  @axm12 partition(Message, {you_can_move})
+  @axm6 max_monte_charge ∈ ℕ
+  @axm7 max_monte_charge = 6
+
+  @axm8 partition(Message,{you_can_move})
 
 end
 
