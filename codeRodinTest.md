@@ -889,7 +889,7 @@ end
 
 context context_ferry2
 
-sets Vehicule Pont Id_reservation
+sets Vehicule Pont Id_reservation Message
 
 constants
 
@@ -900,7 +900,7 @@ constants
   i10 i21 i30 i14 i20 i38
   i17 i24 i31 i19 i28 i35
   i25 i36 i18 i29 i32 i16 i55
-  max_capacity_pont max_monte_charge  Voiture Camion
+  max_capacity_pont max_monte_charge  Voiture Camion you_can_move
 
 
 axioms
@@ -916,6 +916,7 @@ axioms
   											,{i16},{i25},{i36},{i18},{i29},{i32},
   													{i10},{i21},{i30},{i14},{i20},{i38},
   														{i17},{i24},{i31},{i19},{i28},{i35},{i55})
+  @axm10 partition(Message,{you_can_move})
 end
 
 <!--------------------  Fin C2 -------------------->
