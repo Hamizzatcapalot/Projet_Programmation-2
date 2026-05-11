@@ -1,0 +1,345 @@
+// ================================
+// FERRY SIMULATION - PROCESSING
+// ================================
+
+// ---------- VEHICULE ----------
+class Vehicule {
+  String id;
+  String type; // voiture ou camion
+  int taille;
+  color c;
+
+  float x, y;
+
+  Vehicule(String id, String type) {
+    this.id = id;
+    this.type = type;
+
+    if (type.equals("voiture")) {
+      taille = 1;
+      c = color(0, 150, 255);
+    } else {
+      taille = 3;
+      c = color(255, 120, 0);
+    }
+  }
+
+  void display() {
+    fill(c);
+
+    if (type.equals("voiture")) {
+      rect(x, y, 50, 25);
+    } else {
+      rect(x, y, 90, 30);
+    }
+
+    fill(255);
+    textSize(12);
+    text(id, x + 5, y + 18);
+  }
+}
+
+// ---------- VARIABLES ----------
+ArrayList<Vehicule> fileVoiture = new ArrayList<Vehicule>();
+ArrayList<Vehicule> fileCamion = new ArrayList<Vehicule>();
+
+ArrayList<Vehicule> pont1 = new ArrayList<Vehicule>();
+ArrayList<Vehicule> pont2 = new ArrayList<Vehicule>();
+ArrayList<Vehicule> pont3 = new ArrayList<Vehicule>();
+
+ArrayList<Vehicule> monteCharge = new ArrayList<Vehicule>();
+
+boolean barriereOpen = false;
+boolean movingLift = false;
+
+int positionLift = 1;
+int cibleLift = 1;
+
+float liftY = 430;
+
+int maxPont = 8;
+int maxLift = 6;
+
+Vehicule currentVehicule = null;
+
+// ================================
+// SETUP
+// ================================
+void setup() {
+
+  size(1400, 800);
+
+  textAlign(CENTER, CENTER);
+
+  // véhicules initiaux
+  fileCamion.add(new Vehicule("C1", "camion"));
+  fileCamion.add(new Vehicule("C2", "camion"));
+
+  fileVoiture.add(new Vehicule("V1", "voiture"));
+  fileVoiture.add(new Vehicule("V2", "voiture"));
+  fileVoiture.add(new Vehicule("V3", "voiture"));
+  fileVoiture.add(new Vehicule("V4", "voiture"));
+}
+
+// ================================
+// DRAW
+// ================================
+void draw() {
+
+  background(220);
+
+  drawPonts();
+  drawQueues();
+  drawLift();
+  drawInfos();
+
+  animateLift();
+}
+
+// ================================
+// DESSIN PONTS
+// ================================
+void drawPonts() {
+
+  fill(180);
+
+  // ponts
+  rect(800, 120, 450, 80);
+  rect(800, 320, 450, 80);
+  rect(800, 520, 450, 80);
+
+  fill(0);
+  textSize(24);
+
+  text("PONT 3", 1020, 160);
+  text("PONT 2", 1020, 360);
+  text("PONT 1", 1020, 560);
+
+  drawVehiculesOnPont(pont3, 830, 130);
+  drawVehiculesOnPont(pont2, 830, 330);
+  drawVehiculesOnPont(pont1, 830, 530);
+}
+
+// ================================
+// VEHICULES SUR PONT
+// ================================
+void drawVehiculesOnPont(ArrayList<Vehicule> pont, int startX, int y) {
+
+  int x = startX;
+
+  for (Vehicule v : pont) {
+
+    v.x = x;
+    v.y = y;
+
+    v.display();
+
+    x += 100;
+  }
+}
+
+// ================================
+// FILES ATTENTE
+// ================================
+void drawQueues() {
+
+  fill(0);
+  textSize(22);
+
+  text("FILE CAMIONS", 220, 150);
+  text("FILE VOITURES", 220, 350);
+
+  // camions
+  int y1 = 180;
+
+  for (Vehicule v : fileCamion) {
+
+    v.x = 120;
+    v.y = y1;
+
+    v.display();
+
+    y1 += 50;
+  }
+
+  // voitures
+  int y2 = 380;
+
+  for (Vehicule v : fileVoiture) {
+
+    v.x = 120;
+    v.y = y2;
+
+    v.display();
+
+    y2 += 40;
+  }
+}
+
+// ================================
+// MONTE CHARGE
+// ================================
+void drawLift() {
+
+  fill(120);
+
+  rect(500, liftY, 180, 80);
+
+  fill(0);
+  textSize(18);
+
+  text("MONTE CHARGE", 590, liftY - 20);
+
+  // barrières
+  if (barriereOpen) {
+    fill(0, 255, 0);
+  } else {
+    fill(255, 0, 0);
+  }
+
+  rect(480, liftY + 10, 10, 60);
+  rect(690, liftY + 10, 10, 60);
+
+  // véhicules lift
+  int x = 520;
+
+  for (Vehicule v : monteCharge) {
+
+    v.x = x;
+    v.y = liftY + 25;
+
+    v.display();
+
+    x += 70;
+  }
+}
+
+// ================================
+// INFOS
+// ================================
+void drawInfos() {
+
+  fill(0);
+
+  textSize(18);
+
+  text("TOUCHES :", 250, 650);
+
+  text("A = ouvrir barrières", 250, 690);
+  text("Z = fermer barrières", 250, 720);
+  text("E = charger véhicule", 250, 750);
+  text("R = envoyer vers pont", 250, 780);
+
+  text("Lift position : " + positionLift, 1000, 700);
+}
+
+// ================================
+// CLAVIER
+// ================================
+void keyPressed() {
+
+  // ouvrir
+  if (key == 'a') {
+    barriereOpen = true;
+  }
+
+  // fermer
+  if (key == 'z') {
+    barriereOpen = false;
+  }
+
+  // charger
+  if (key == 'e') {
+
+    if (barriereOpen && monteCharge.size() == 0) {
+
+      // priorité camions vers pont1
+      if (fileCamion.size() > 0 && pont1.size() < maxPont) {
+
+        Vehicule v = fileCamion.remove(0);
+
+        monteCharge.add(v);
+
+        cibleLift = 1;
+      }
+
+      else if (fileVoiture.size() > 0) {
+
+        Vehicule v = fileVoiture.remove(0);
+
+        monteCharge.add(v);
+
+        // choix automatique du pont
+        if (pont2.size() < maxPont) {
+          cibleLift = 2;
+        } else {
+          cibleLift = 3;
+        }
+      }
+    }
+  }
+
+  // déplacer
+  if (key == 'r') {
+
+    if (monteCharge.size() > 0) {
+
+      movingLift = true;
+    }
+  }
+}
+
+// ================================
+// ANIMATION MONTE CHARGE
+// ================================
+void animateLift() {
+
+  if (movingLift) {
+
+    float targetY = 430;
+
+    if (cibleLift == 2) {
+      targetY = 230;
+    }
+
+    if (cibleLift == 3) {
+      targetY = 30;
+    }
+
+    if (liftY > targetY) {
+
+      liftY -= 2;
+    }
+
+    else {
+
+      movingLift = false;
+
+      positionLift = cibleLift;
+
+      unloadVehicule();
+    }
+  }
+}
+
+// ================================
+// DEBARQUEMENT
+// ================================
+void unloadVehicule() {
+
+  if (monteCharge.size() == 0) return;
+
+  Vehicule v = monteCharge.remove(0);
+
+  if (positionLift == 1) {
+    pont1.add(v);
+  }
+
+  else if (positionLift == 2) {
+    pont2.add(v);
+  }
+
+  else {
+    pont3.add(v);
+  }
+}
