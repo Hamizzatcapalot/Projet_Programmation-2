@@ -1,345 +1,571 @@
-// ================================
-// FERRY SIMULATION - PROCESSING
-// ================================
+// ==========================================================
+// FERRY PROJECT - PROCESSING / JAVA
+// VERSION FIDELE AU MODELE EVENT-B M5
+// ==========================================================
+//
+// Respecte :
+// - réservation
+// - files séparées
+// - tailles véhicules
+// - priorité camions
+// - monte-charge
+// - barrières
+// - capteurs
+// - alignement
+// - capacité ponts
+// - capacité monte-charge
+// - notifications
+// - déplacement vertical
+//
+// TOUCHES :
+// C -> ajouter camion
+// V -> ajouter voiture
+// O -> ouvrir barrières embarquement
+// F -> fermer barrières
+// M -> charger véhicule dans monte-charge
+// U -> monter vers pont cible
+// D -> débarquer vers pont
+// R -> redescendre monte-charge
+//
+// ==========================================================
 
-// ---------- VEHICULE ----------
-class Vehicule {
-  String id;
-  String type; // voiture ou camion
-  int taille;
-  color c;
+// ==========================================================
+// CONSTANTES
+// ==========================================================
 
-  float x, y;
+final int MAX_CAPACITY_PONT = 8;
+final int MAX_MONTE_CHARGE = 6;
 
-  Vehicule(String id, String type) {
-    this.id = id;
-    this.type = type;
+// ==========================================================
+// VARIABLES EVENT-B
+// ==========================================================
 
-    if (type.equals("voiture")) {
-      taille = 1;
-      c = color(0, 150, 255);
-    } else {
-      taille = 3;
-      c = color(255, 120, 0);
-    }
-  }
-
-  void display() {
-    fill(c);
-
-    if (type.equals("voiture")) {
-      rect(x, y, 50, 25);
-    } else {
-      rect(x, y, 90, 30);
-    }
-
-    fill(255);
-    textSize(12);
-    text(id, x + 5, y + 18);
-  }
-}
-
-// ---------- VARIABLES ----------
-ArrayList<Vehicule> fileVoiture = new ArrayList<Vehicule>();
-ArrayList<Vehicule> fileCamion = new ArrayList<Vehicule>();
+ArrayList<Vehicule> file1 = new ArrayList<Vehicule>(); // camions
+ArrayList<Vehicule> file2 = new ArrayList<Vehicule>(); // voitures
 
 ArrayList<Vehicule> pont1 = new ArrayList<Vehicule>();
 ArrayList<Vehicule> pont2 = new ArrayList<Vehicule>();
 ArrayList<Vehicule> pont3 = new ArrayList<Vehicule>();
 
-ArrayList<Vehicule> monteCharge = new ArrayList<Vehicule>();
+ArrayList<Vehicule> monte_charge = new ArrayList<Vehicule>();
 
-boolean barriereOpen = false;
-boolean movingLift = false;
+boolean barriere_open = false;
+boolean capteurs = false;
+boolean end_embark = true;
 
-int positionLift = 1;
-int cibleLift = 1;
+int pont_cible = 1;
+int position_montecharge = 1;
 
-float liftY = 430;
+boolean moving = false;
 
-int maxPont = 8;
-int maxLift = 6;
+float monteChargeY = 520;
 
-Vehicule currentVehicule = null;
+String dernierEvent = "INITIALISATION";
 
-// ================================
+int compteurVoiture = 1;
+int compteurCamion = 1;
+
+// ==========================================================
+// CLASSE VEHICULE
+// ==========================================================
+
+class Vehicule {
+
+  String id;
+  boolean camion;
+
+  int taille;
+
+  Vehicule(String id, boolean camion) {
+
+    this.id = id;
+    this.camion = camion;
+
+    if (camion) taille = 3;
+    else taille = 1;
+  }
+
+  void display(float x, float y) {
+
+    if (camion) {
+
+      fill(255, 120, 0);
+
+      rect(x, y, 70, 90);
+
+    } else {
+
+      fill(0, 140, 255);
+
+      rect(x, y, 60, 30);
+    }
+
+    fill(255);
+
+    textSize(14);
+
+    text(id, x + 30, y + 15);
+  }
+}
+
+// ==========================================================
 // SETUP
-// ================================
+// ==========================================================
+
 void setup() {
 
-  size(1400, 800);
+  size(1500, 900);
 
+  rectMode(CORNER);
   textAlign(CENTER, CENTER);
-
-  // véhicules initiaux
-  fileCamion.add(new Vehicule("C1", "camion"));
-  fileCamion.add(new Vehicule("C2", "camion"));
-
-  fileVoiture.add(new Vehicule("V1", "voiture"));
-  fileVoiture.add(new Vehicule("V2", "voiture"));
-  fileVoiture.add(new Vehicule("V3", "voiture"));
-  fileVoiture.add(new Vehicule("V4", "voiture"));
 }
 
-// ================================
+// ==========================================================
 // DRAW
-// ================================
+// ==========================================================
+
 void draw() {
 
-  background(220);
+  background(230);
 
   drawPonts();
+
   drawQueues();
-  drawLift();
+
+  drawMonteCharge();
+
   drawInfos();
 
-  animateLift();
+  animateMonteCharge();
 }
 
-// ================================
+// ==========================================================
 // DESSIN PONTS
-// ================================
+// ==========================================================
+
 void drawPonts() {
 
-  fill(180);
+  fill(170);
 
-  // ponts
-  rect(800, 120, 450, 80);
-  rect(800, 320, 450, 80);
-  rect(800, 520, 450, 80);
+  rect(900, 100, 450, 100);
+  rect(900, 320, 450, 100);
+  rect(900, 540, 450, 100);
 
   fill(0);
-  textSize(24);
 
-  text("PONT 3", 1020, 160);
-  text("PONT 2", 1020, 360);
-  text("PONT 1", 1020, 560);
+  textSize(28);
 
-  drawVehiculesOnPont(pont3, 830, 130);
-  drawVehiculesOnPont(pont2, 830, 330);
-  drawVehiculesOnPont(pont1, 830, 530);
+  text("PONT 3", 1125, 150);
+  text("PONT 2", 1125, 370);
+  text("PONT 1", 1125, 590);
+
+  drawVehiculesPont(pont3, 930, 120);
+  drawVehiculesPont(pont2, 930, 340);
+  drawVehiculesPont(pont1, 930, 560);
 }
 
-// ================================
-// VEHICULES SUR PONT
-// ================================
-void drawVehiculesOnPont(ArrayList<Vehicule> pont, int startX, int y) {
+// ==========================================================
+// DESSIN VEHICULES SUR PONTS
+// ==========================================================
+
+void drawVehiculesPont(ArrayList<Vehicule> pont, int startX, int y) {
 
   int x = startX;
 
   for (Vehicule v : pont) {
 
-    v.x = x;
-    v.y = y;
+    if (v.camion) {
 
-    v.display();
+      v.display(x, y);
 
-    x += 100;
+      x += 90;
+
+    } else {
+
+      v.display(x, y + 20);
+
+      x += 70;
+    }
   }
 }
 
-// ================================
-// FILES ATTENTE
-// ================================
+// ==========================================================
+// FILES
+// ==========================================================
+
 void drawQueues() {
 
   fill(0);
-  textSize(22);
 
-  text("FILE CAMIONS", 220, 150);
-  text("FILE VOITURES", 220, 350);
+  textSize(24);
 
-  // camions
-  int y1 = 180;
+  text("FILE CAMIONS", 200, 120);
+  text("FILE VOITURES", 200, 420);
 
-  for (Vehicule v : fileCamion) {
+  int y1 = 160;
 
-    v.x = 120;
-    v.y = y1;
+  for (Vehicule v : file1) {
 
-    v.display();
+    v.display(120, y1);
 
-    y1 += 50;
+    y1 += 110;
   }
 
-  // voitures
-  int y2 = 380;
+  int y2 = 470;
 
-  for (Vehicule v : fileVoiture) {
+  for (Vehicule v : file2) {
 
-    v.x = 120;
-    v.y = y2;
+    v.display(120, y2);
 
-    v.display();
-
-    y2 += 40;
+    y2 += 50;
   }
 }
 
-// ================================
+// ==========================================================
 // MONTE CHARGE
-// ================================
-void drawLift() {
+// ==========================================================
+
+void drawMonteCharge() {
 
   fill(120);
 
-  rect(500, liftY, 180, 80);
+  rect(500, monteChargeY, 250, 140);
 
   fill(0);
-  textSize(18);
 
-  text("MONTE CHARGE", 590, liftY - 20);
+  textSize(22);
+
+  text("MONTE-CHARGE", 625, monteChargeY - 25);
 
   // barrières
-  if (barriereOpen) {
-    fill(0, 255, 0);
-  } else {
-    fill(255, 0, 0);
-  }
 
-  rect(480, liftY + 10, 10, 60);
-  rect(690, liftY + 10, 10, 60);
+  if (barriere_open) fill(0, 255, 0);
+  else fill(255, 0, 0);
 
-  // véhicules lift
-  int x = 520;
+  rect(480, monteChargeY + 10, 10, 120);
+  rect(760, monteChargeY + 10, 10, 120);
 
-  for (Vehicule v : monteCharge) {
+  // grille 2 colonnes
 
-    v.x = x;
-    v.y = liftY + 25;
+  int col = 0;
 
-    v.display();
+  for (Vehicule v : monte_charge) {
 
-    x += 70;
+    float x = 530 + col * 100;
+
+    if (v.camion) {
+
+      v.display(x, monteChargeY + 20);
+
+    } else {
+
+      v.display(x, monteChargeY + 40);
+    }
+
+    col++;
   }
 }
 
-// ================================
+// ==========================================================
 // INFOS
-// ================================
+// ==========================================================
+
 void drawInfos() {
 
   fill(0);
 
-  textSize(18);
+  textSize(20);
 
-  text("TOUCHES :", 250, 650);
+  text("COMMANDES", 350, 760);
 
-  text("A = ouvrir barrières", 250, 690);
-  text("Z = fermer barrières", 250, 720);
-  text("E = charger véhicule", 250, 750);
-  text("R = envoyer vers pont", 250, 780);
+  text("C : nouveau camion", 350, 790);
+  text("V : nouvelle voiture", 350, 820);
 
-  text("Lift position : " + positionLift, 1000, 700);
+  text("O : ouvrir barrieres", 650, 790);
+  text("F : fermer barrieres", 650, 820);
+
+  text("M : charger monte-charge", 1000, 790);
+  text("U : monter", 1000, 820);
+
+  text("D : debarquer", 1300, 790);
+  text("R : redescendre", 1300, 820);
+
+  fill(20);
+
+  textSize(24);
+
+  text("EVENT : " + dernierEvent, 750, 40);
+
+  text("Pont cible : " + pont_cible, 750, 70);
+
+  text("Position monte-charge : " + position_montecharge, 750, 100);
+
+  text("Capteurs : " + capteurs, 750, 130);
+
+  text("Barriere ouverte : " + barriere_open, 750, 160);
 }
 
-// ================================
+// ==========================================================
+// CAPACITE MONTE CHARGE
+// ==========================================================
+
+int capaciteMonteCharge() {
+
+  int total = 0;
+
+  for (Vehicule v : monte_charge) {
+
+    total += v.taille;
+  }
+
+  return total;
+}
+
+// ==========================================================
+// NOMBRE CAMIONS
+// ==========================================================
+
+int nombreCamionsMonteCharge() {
+
+  int n = 0;
+
+  for (Vehicule v : monte_charge) {
+
+    if (v.camion) n++;
+  }
+
+  return n;
+}
+
+// ==========================================================
 // CLAVIER
-// ================================
+// ==========================================================
+
 void keyPressed() {
 
-  // ouvrir
-  if (key == 'a') {
-    barriereOpen = true;
+  // ======================================================
+  // BORNE LECTURE CAMION
+  // ======================================================
+
+  if (key == 'c') {
+
+    Vehicule v =
+      new Vehicule("C" + compteurCamion, true);
+
+    compteurCamion++;
+
+    file1.add(v);
+
+    dernierEvent = "borne_lecture_camion";
   }
 
-  // fermer
-  if (key == 'z') {
-    barriereOpen = false;
+  // ======================================================
+  // BORNE LECTURE VOITURE
+  // ======================================================
+
+  if (key == 'v') {
+
+    Vehicule v =
+      new Vehicule("V" + compteurVoiture, false);
+
+    compteurVoiture++;
+
+    file2.add(v);
+
+    dernierEvent = "borne_lecture_voiture";
   }
 
-  // charger
-  if (key == 'e') {
+  // ======================================================
+  // OPEN BARRIERES EMBARQUEMENT
+  // ======================================================
 
-    if (barriereOpen && monteCharge.size() == 0) {
+  if (key == 'o') {
 
-      // priorité camions vers pont1
-      if (fileCamion.size() > 0 && pont1.size() < maxPont) {
+    if (!barriere_open &&
+      monte_charge.size() == 0 &&
+      end_embark) {
 
-        Vehicule v = fileCamion.remove(0);
+      barriere_open = true;
 
-        monteCharge.add(v);
+      dernierEvent =
+        "open_barrieres_embarquement";
+    }
+  }
 
-        cibleLift = 1;
+  // ======================================================
+  // CLOSE BARRIERES
+  // ======================================================
+
+  if (key == 'f') {
+
+    if (barriere_open) {
+
+      barriere_open = false;
+
+      dernierEvent = "close_barrieres";
+    }
+  }
+
+  // ======================================================
+  // CHARGEMENT MONTE CHARGE
+  // ======================================================
+
+  if (key == 'm') {
+
+    if (barriere_open &&
+      end_embark &&
+      !moving) {
+
+      // priorité camions
+
+      if (file1.size() > 0 &&
+        nombreCamionsMonteCharge() < 2) {
+
+        Vehicule v = file1.get(0);
+
+        if (capaciteMonteCharge() +
+          v.taille <= MAX_MONTE_CHARGE) {
+
+          monte_charge.add(v);
+
+          file1.remove(0);
+
+          pont_cible = 1;
+
+          dernierEvent =
+            "camion_to_monte_charge";
+        }
       }
 
-      else if (fileVoiture.size() > 0) {
+      else if (file2.size() > 0) {
 
-        Vehicule v = fileVoiture.remove(0);
+        Vehicule v = file2.get(0);
 
-        monteCharge.add(v);
+        if (capaciteMonteCharge() +
+          v.taille <= MAX_MONTE_CHARGE) {
 
-        // choix automatique du pont
-        if (pont2.size() < maxPont) {
-          cibleLift = 2;
-        } else {
-          cibleLift = 3;
+          monte_charge.add(v);
+
+          file2.remove(0);
+
+          // choix pont
+
+          if (pont2.size() < MAX_CAPACITY_PONT)
+            pont_cible = 2;
+          else
+            pont_cible = 3;
+
+          dernierEvent =
+            "voiture_to_monte_charge";
         }
       }
     }
   }
 
-  // déplacer
+  // ======================================================
+  // MOVE MONTE CHARGE UP
+  // ======================================================
+
+  if (key == 'u') {
+
+    if (!barriere_open &&
+      monte_charge.size() > 0 &&
+      !moving) {
+
+      moving = true;
+
+      end_embark = false;
+
+      capteurs = false;
+
+      dernierEvent =
+        "move_monte_charge_up";
+    }
+  }
+
+  // ======================================================
+  // DEBARQUEMENT
+  // ======================================================
+
+  if (key == 'd') {
+
+    if (barriere_open &&
+      capteurs &&
+      monte_charge.size() > 0) {
+
+      Vehicule v = monte_charge.remove(0);
+
+      if (pont_cible == 1)
+        pont1.add(v);
+
+      if (pont_cible == 2)
+        pont2.add(v);
+
+      if (pont_cible == 3)
+        pont3.add(v);
+
+      dernierEvent =
+        "monte_charge_to_pont";
+    }
+  }
+
+  // ======================================================
+  // REDESCENDRE
+  // ======================================================
+
   if (key == 'r') {
 
-    if (monteCharge.size() > 0) {
+    if (monte_charge.size() == 0 &&
+      !barriere_open &&
+      !moving) {
 
-      movingLift = true;
+      pont_cible = 1;
+
+      moving = true;
+
+      capteurs = false;
+
+      dernierEvent =
+        "move_monte_charge_down";
     }
   }
 }
 
-// ================================
-// ANIMATION MONTE CHARGE
-// ================================
-void animateLift() {
+// ==========================================================
+// ANIMATION
+// ==========================================================
 
-  if (movingLift) {
+void animateMonteCharge() {
 
-    float targetY = 430;
+  if (!moving) return;
 
-    if (cibleLift == 2) {
-      targetY = 230;
-    }
+  float cibleY = 520;
 
-    if (cibleLift == 3) {
-      targetY = 30;
-    }
+  if (pont_cible == 2)
+    cibleY = 300;
 
-    if (liftY > targetY) {
+  if (pont_cible == 3)
+    cibleY = 80;
 
-      liftY -= 2;
-    }
+  if (abs(monteChargeY - cibleY) > 2) {
 
-    else {
-
-      movingLift = false;
-
-      positionLift = cibleLift;
-
-      unloadVehicule();
-    }
-  }
-}
-
-// ================================
-// DEBARQUEMENT
-// ================================
-void unloadVehicule() {
-
-  if (monteCharge.size() == 0) return;
-
-  Vehicule v = monteCharge.remove(0);
-
-  if (positionLift == 1) {
-    pont1.add(v);
-  }
-
-  else if (positionLift == 2) {
-    pont2.add(v);
+    if (monteChargeY < cibleY)
+      monteChargeY += 2;
+    else
+      monteChargeY -= 2;
   }
 
   else {
-    pont3.add(v);
+
+    monteChargeY = cibleY;
+
+    moving = false;
+
+    position_montecharge = pont_cible;
+
+    capteurs = true;
+
+    dernierEvent =
+      "capteurs_detecte_alignement";
   }
 }
